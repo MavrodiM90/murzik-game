@@ -73,6 +73,18 @@ export const ICONS: Record<string, string> = {
   gift: svg(`<rect x="8" y="26" width="48" height="30" rx="4" fill="#ff8fa3" ${S}/><rect x="6" y="18" width="52" height="12" rx="4" fill="#ffb3c6" ${S}/><rect x="28" y="18" width="8" height="38" fill="#ffd23f" ${S} stroke-width="2"/><path d="M32 18 C20 4 10 12 22 18 M32 18 C44 4 54 12 42 18" fill="none" ${S}/>`),
 };
 
+
+Object.assign(ICONS, {
+  glasses: svg(`<circle cx="18" cy="34" r="12" fill="#bfe9ff" ${S}/><circle cx="46" cy="34" r="12" fill="#bfe9ff" ${S}/><path d="M30 33 Q32 28 34 33" fill="none" ${S}/><path d="M6 32 L2 24 M58 32 L62 24" fill="none" ${S}/>`),
+  bow: svg(`<path d="M32 32 L8 16 V48Z" fill="#ff6b81" ${S}/><path d="M32 32 L56 16 V48Z" fill="#ff6b81" ${S}/><circle cx="32" cy="32" r="7" fill="#ff8fa3" ${S}/>`),
+  scarf: svg(`<path d="M8 22 Q32 40 56 22 L56 36 Q32 54 8 36Z" fill="#4da3ff" ${S}/><path d="M40 40 L50 58 L38 60 L32 44Z" fill="#4da3ff" ${S}/><path d="M14 28 L18 40 M26 33 L28 45 M38 33 L36 45 M50 28 L46 40" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>`),
+  fur: svg(`<circle cx="32" cy="38" r="20" fill="#ff9a3c" ${S}/><path d="M14 26 L12 8 L28 18Z M50 26 L52 8 L36 18Z" fill="#ff9a3c" ${S}/><ellipse cx="32" cy="46" rx="11" ry="8" fill="#fff7ec"/><circle cx="24" cy="34" r="3" fill="#3b2a20"/><circle cx="40" cy="34" r="3" fill="#3b2a20"/>`),
+  wall: svg(`<rect x="6" y="8" width="52" height="48" rx="4" fill="#ffe3c7" ${S}/><path d="M18 8 V56 M30 8 V56 M42 8 V56" stroke="#f1c9a0" stroke-width="5"/><rect x="22" y="18" width="20" height="16" fill="#8fd3ff" ${S} stroke-width="2.5"/>`),
+  floor: svg(`<path d="M4 22 H60 L56 58 H8Z" fill="#d9a066" ${S}/><path d="M6 36 H58 M7 47 H57 M24 22 L20 58 M42 22 L44 58" stroke="#a8743c" stroke-width="2.5" fill="none"/>`),
+  bag: svg(`<path d="M12 22 H52 L48 56 H16Z" fill="#ff8fa3" ${S}/><path d="M22 22 V16 A10 10 0 0 1 42 16 V22" fill="none" ${S}/><circle cx="32" cy="40" r="7" fill="#ffd23f" ${S} stroke-width="2.5"/>`),
+  lock: svg(`<rect x="14" y="28" width="36" height="28" rx="6" fill="#b0b8c4" ${S}/><path d="M22 28 V20 A10 10 0 0 1 42 20 V28" fill="none" ${S}/><circle cx="32" cy="42" r="4" fill="#3b2a20"/>`),
+});
+
 export function icon(name: string): string {
   return ICONS[name] ?? ICONS.question!;
 }

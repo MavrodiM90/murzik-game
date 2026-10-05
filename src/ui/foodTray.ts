@@ -44,6 +44,7 @@ export class FoodTray implements Panel {
     this.el = el;
     this.hud.root.append(el);
     this.hud.openPanel(this);
+    this.game.setFocus(0.09);
     this.render();
     this.game.synth.play('chime');
   }
@@ -54,6 +55,7 @@ export class FoodTray implements Panel {
     this.el = null;
     this.mode = null;
     this.game.cat.mouthHint = 0;
+    this.game.setFocus(0);
     if (!silent) this.hud.clearPanel(this);
   }
 

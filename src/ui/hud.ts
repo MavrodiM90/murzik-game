@@ -5,6 +5,7 @@ import { ROOM_ORDER, type RoomId } from '../render/rooms';
 import { BathTools } from './bathTools';
 import { FoodTray } from './foodTray';
 import { icon } from './icons';
+import { ShopPanel } from './shop';
 
 export interface Panel {
   close(): void;
@@ -42,6 +43,9 @@ export class Hud {
   private panel: Panel | null = null;
   readonly bath: BathTools;
   readonly tray: FoodTray;
+  readonly shop: ShopPanel;
+  private chestBtn: HTMLButtonElement | null = null;
+  private chestAcc = 0;
   private extraTools: Partial<Record<RoomId, ToolSpec[]>> = {};
   private toolButtons: { spec: ToolSpec; el: HTMLButtonElement }[] = [];
   private lastLow: NeedId | null = null;
@@ -54,6 +58,16 @@ export class Hud {
     this.build();
     this.bath = new BathTools(game, this);
     this.tray = new FoodTray(game, this);
+    this.shop = new ShopPanel(game, this);
+    this.addSide(makeButton('shop', 'Магазин', 'btn-shop', () => this.shop.toggle('shop')));
+    this.addSide(makeButton('wardrobe', 'Гардероб', 'btn-wardrobe', () => this.shop.toggle('wardrobe')));
+    game.onUpdate.push((dt) => {
+      this.chestAcc += dt;
+      if (this.chestAcc > 0.5) {
+        this.chestAcc = 0;
+        this.refreshChest();
+      }
+    });
     game.on('needs', () => this.refreshNeeds());
     game.on('coins', () => this.refreshCoins());
     game.on('room', () => this.onRoom());
@@ -243,6 +257,9 @@ export class Hud {
           active: () => !g.lampOn,
         });
         break;
+      case 'living':
+        specs.push({ id: 'chest', icon: 'chest', label: 'Сундучок', onTap: () => this.chestTap() });
+        break;
       default:
         break;
     }
@@ -256,7 +273,32 @@ export class Hud {
       this.toolsEl.append(b);
       this.toolButtons.push({ spec: s, el: b });
     }
+    this.chestBtn = this.toolsEl.querySelector('.tool-chest');
+    this.refreshChest();
     this.refreshToolStates();
+  }
+
+  private chestTap(): void {
+    const reward = this.game.openChest();
+    if (reward > 0) {
+      const el = document.createElement('div');
+      el.className = 'chest-reward';
+      el.innerHTML = `<span class="ci">${icon('coin')}</span><b>+${reward}</b>`;
+      this.root.append(el);
+      window.setTimeout(() => el.remove(), 1800);
+    } else this.chestBtn?.classList.add('shake');
+    window.setTimeout(() => this.chestBtn?.classList.remove('shake'), 500);
+    this.refreshChest();
+  }
+
+  private refreshChest(): void {
+    const b = this.chestBtn;
+    if (!b) return;
+    const st = this.game.chest();
+    b.classList.toggle('ready', st.ready);
+    b.classList.toggle('wait', !st.ready);
+    const frac = st.ready ? 1 : 1 - st.remainingMs / (4 * 60 * 60 * 1000);
+    b.style.setProperty('--prog', `${Math.round(Math.max(0, Math.min(1, frac)) * 360)}deg`);
   }
 
   refreshToolStates(): void {

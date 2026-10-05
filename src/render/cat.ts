@@ -1047,6 +1047,8 @@ export class Cat {
         this.dizzyStars[i]!.position.set(Math.cos(a) * 0.95, 1.2 + Math.sin(a * 2) * 0.07, Math.sin(a) * 0.9);
       }
     }
+    const hatObj = this.anchors.hat.children[0];
+    (hatObj?.userData.tick as ((t: number) => void) | undefined)?.(this.time);
     // squash & stretch
     const sy = this.sq.step(dt);
     const breath = Math.sin(this.time * (this.mode === 'lying' ? 1.4 : 2.2));

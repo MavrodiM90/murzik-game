@@ -30,6 +30,7 @@ export class Stage {
   width = 1;
   height = 1;
   private night = 0;
+  private shift = 0;
   private dayBg = new Color(0xffe3c7);
   private nightBg = new Color(0x141a3a);
   private bg = new Color();
@@ -69,6 +70,7 @@ export class Stage {
     this.camera.updateProjectionMatrix();
     this.camera.lookAt(this.camX, this.lookY, 0);
     this.camera.updateMatrixWorld(true);
+    if (Math.abs(this.shift) >= 0.001) this.applyShift();
   }
 
   setCameraX(x: number): void {
@@ -116,6 +118,18 @@ export class Stage {
     const a = this.pointerToWorld(0, 0, new Vector3());
     const b = this.pointerToWorld(this.canvas.getBoundingClientRect().width, 0, new Vector3());
     return Math.abs(b.x - a.x) / this.canvas.getBoundingClientRect().width;
+  }
+
+  /** Сдвиг кадра вверх (доля высоты) — чтобы панель снизу не закрывала кота. */
+  setFocusShift(f: number): void {
+    if (Math.abs(f - this.shift) < 0.0005) return;
+    this.shift = f;
+    this.applyShift();
+  }
+  private applyShift(): void {
+    if (Math.abs(this.shift) < 0.001) this.camera.clearViewOffset();
+    else this.camera.setViewOffset(this.width, this.height, 0, this.shift * this.height, this.width, this.height);
+    this.camera.updateProjectionMatrix();
   }
 
   render(): void {

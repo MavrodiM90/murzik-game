@@ -13,23 +13,27 @@ import {
   type NeedId,
 } from './config';
 import { CatInput, type InputHost } from './input';
-import { getItem } from './logic/catalog';
-import { consumeFood, earn } from './logic/economy';
+import { getItem, type AccessorySlot } from './logic/catalog';
+import { chestReward, chestStatus } from './logic/chest';
+import { buy, consumeFood, earn, equip, setFur, setRoomStyle, unequip, type BuyResult } from './logic/economy';
 import type { Part } from './logic/gestures';
 import { clamp, damp, randRange } from './logic/math';
 import { decayNeeds, gain, moodFromNeeds, offlineDecay } from './logic/needs';
 import { loadSave, writeSave, type RoomKey, type SaveData } from './logic/save';
 import { makeBounds } from './logic/throwPhysics';
 import { Cat, type CatEvent, type FxAnchor, type FxName } from './render/cat';
+import { buildAccessory } from './render/accessories';
 import { Particles } from './render/particles';
 import { Ball } from './render/props';
 import { createRooms, roomCenterX, ROOM_ORDER, type Room, type RoomId } from './render/rooms';
 import { Stage } from './render/stage';
+import { Thumbs } from './render/thumbs';
 
 export type GameEvent = 'coins' | 'needs' | 'room' | 'appearance' | 'sleep' | 'inventory';
 
 export class Game implements InputHost {
   readonly stage: Stage;
+  readonly thumbs: Thumbs;
   readonly cat = new Cat();
   readonly particles: Particles;
   readonly synth = new Synth();
@@ -55,6 +59,8 @@ export class Game implements InputHost {
   // сон
   sleepRequested = false;
   private night = 0;
+  private focus = 0;
+  focusTarget = 0;
   // горшок
   private pottyPending = false;
   /** Хук HUD для нажатия на объекты комнаты (холодильник, лампа, ТВ …) */
@@ -65,6 +71,7 @@ export class Game implements InputHost {
   constructor(readonly canvas: HTMLCanvasElement) {
     this.save = loadSave();
     this.stage = new Stage(canvas);
+    this.thumbs = new Thumbs(this.stage.renderer);
     this.particles = new Particles(this.stage.scene);
     const wall = {} as Record<RoomId, number>;
     const floor = {} as Record<RoomId, number>;
@@ -79,7 +86,7 @@ export class Game implements InputHost {
     this.stage.scene.add(this.cat.group);
     this.cat.setBounds(makeBounds());
     this.cat.resetToStand(0);
-    this.cat.setFur(this.save.fur);
+    this.applyAppearance();
     this.cat.onEvent = (e) => this.onCatEvent(e);
     this.cat.onActionEnd = (n) => this.onCatActionEnd(n);
     this.input = new CatInput(this);
@@ -168,6 +175,8 @@ export class Game implements InputHost {
     const target = roomCenterX(this.roomId);
     this.camX = Math.abs(this.camX - target) < 0.002 ? target : damp(this.camX, target, 9, dt);
     this.stage.setCameraX(this.camX);
+    this.focus = damp(this.focus, this.focusTarget, 9, dt);
+    this.stage.setFocusShift(this.focus);
     this.input.update(dt, now);
     this.updateSleep(dt);
     this.cat.update(dt, this.camX);
@@ -456,6 +465,147 @@ export class Game implements InputHost {
     cat.walkTo(x, () => {
       cat.play('potty', { force: true });
     });
+  }
+
+
+  // ---------------- внешний вид: покупки и гардероб ----------------
+  /** Применяет к коту и комнатам то, что записано в сохранении. */
+  applyAppearance(): void {
+    const s = this.save;
+    this.cat.setFur(s.fur);
+    for (const slot of ['hat', 'glasses', 'bow', 'scarf'] as AccessorySlot[]) {
+      const id = s.equipped[slot];
+      this.cat.setAccessory(slot, id ? buildAccessory(id) : null);
+    }
+    for (const r of ROOM_ORDER) {
+      const w = WALL_COLORS.find((x) => x.id === s.wall[r as RoomKey]);
+      const f = FLOOR_COLORS.find((x) => x.id === s.floor[r as RoomKey]);
+      if (w) this.rooms[r].setWall(w.color);
+      if (f) this.rooms[r].setFloor(f.color);
+    }
+    this.emit('appearance');
+  }
+
+  /** Примерка: показывает предмет, не покупая и не сохраняя. */
+  previewItem(id: string): void {
+    const item = getItem(id);
+    if (!item) return;
+    switch (item.kind) {
+      case 'hat':
+      case 'glasses':
+      case 'bow':
+      case 'scarf':
+        this.cat.setAccessory(item.kind, buildAccessory(id));
+        break;
+      case 'fur':
+        this.cat.setFur(id);
+        break;
+      case 'wall':
+        this.rooms[this.roomId].setWall(item.color ?? 0xffffff);
+        break;
+      case 'floor':
+        this.rooms[this.roomId].setFloor(item.color ?? 0xffffff);
+        break;
+      default:
+        break;
+    }
+  }
+
+  /** Купить предмет (монеты из сохранения), сразу надеть/применить. */
+  buyItem(id: string): BuyResult {
+    const res = buy(this.save, id);
+    if (res.ok) {
+      this.applyOwned(id);
+      this.synth.play('coin');
+      this.persist();
+      this.emit('coins');
+      this.emit('inventory');
+    } else if (res.reason === 'poor') this.synth.play('boop');
+    return res;
+  }
+
+  private applyOwned(id: string): void {
+    const item = getItem(id);
+    if (!item) return;
+    const room = this.roomId as RoomKey;
+    if (item.kind === 'fur') setFur(this.save, id);
+    else if (item.kind === 'wall' || item.kind === 'floor') setRoomStyle(this.save, item.kind, room, id);
+    else if (item.kind !== 'food') equip(this.save, id);
+    this.applyAppearance();
+    if (item.kind !== 'food' && this.cat.mode === 'stand') this.cat.play('newClothes', { force: true });
+  }
+
+  /** Гардероб: надеть/снять (для купленного). */
+  toggleItem(id: string): void {
+    const item = getItem(id);
+    if (!item || !this.save.owned.includes(id)) return;
+    if (item.kind === 'hat' || item.kind === 'glasses' || item.kind === 'bow' || item.kind === 'scarf') {
+      if (this.save.equipped[item.kind] === id) unequip(this.save, item.kind);
+      else equip(this.save, id);
+      this.applyAppearance();
+      if (this.save.equipped[item.kind] === id && this.cat.mode === 'stand') this.cat.play('newClothes', { force: true });
+    } else this.applyOwned(id);
+    this.synth.play('chime');
+    this.persist();
+  }
+
+  setFocus(f: number): void {
+    this.focusTarget = f;
+  }
+
+  // ---------------- сундучок ----------------
+  chest(): { ready: boolean; remainingMs: number } {
+    const st = chestStatus(this.save.lastChestAt, Date.now());
+    if (st.clockWentBack) this.save.lastChestAt = Date.now();
+    return st;
+  }
+
+  openChest(): number {
+    const st = this.chest();
+    if (!st.ready) {
+      this.synth.play('sleepyTick');
+      return 0;
+    }
+    const reward = chestReward();
+    this.save.lastChestAt = Date.now();
+    this.addCoins(reward);
+    this.coinBurst(Math.min(24, 8 + Math.round(reward / 8)));
+    this.synth.play('fanfare');
+    if (this.cat.mode === 'stand') this.cat.play('cheer', { force: true });
+    this.persist();
+    return reward;
+  }
+
+  /** Фонтан монет-спрайтов над котом. */
+  coinBurst(n: number): void {
+    const p = this.cat.anchorWorld('head', this.tmp);
+    for (let i = 0; i < n; i++) {
+      this.particles.spawn(
+        'coin',
+        { x: p.x + randRange(-0.6, 0.6), y: p.y + 0.5, z: 1.5 },
+        { x: randRange(-3, 3), y: randRange(5, 9), z: 0 },
+        { life: 1.4, size: 0.6, gravity: 14, fade: false },
+      );
+    }
+  }
+
+  /** Салют из искр. */
+  fireworks(): void {
+    const cx = this.camX;
+    const cols = [0xffd23f, 0xff6b81, 0x6ee7b7, 0x7fd1ff, 0xc9b8ff, 0xffffff];
+    for (let k = 0; k < 5; k++) {
+      window.setTimeout(() => {
+        const x = cx + randRange(-2.8, 2.8);
+        const y = randRange(7, 11.5);
+        const color = cols[k % cols.length]!;
+        for (let i = 0; i < 26; i++) {
+          const a = (i / 26) * Math.PI * 2;
+          const sp = randRange(3, 5.5);
+          this.particles.spawn('spark', { x, y, z: 1.5 }, { x: Math.cos(a) * sp, y: Math.sin(a) * sp, z: 0 }, { life: 1.1, size: 0.5, gravity: 4, drag: 1.5, color });
+        }
+        this.synth.play('firework');
+      }, k * 260);
+    }
   }
 
   // ---------------- сон ----------------
