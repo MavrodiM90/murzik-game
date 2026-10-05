@@ -396,13 +396,25 @@ export class Parental implements Panel {
         g.cat.lieDown(0.3, 2.75);
         g.emit('sleep');
       }
-      this.later(() => this.showLockScreen(), immediate ? 600 : 3500);
+      this.waitForBed(immediate ? 600 : 3500);
     } else {
       g.cat.play('yawn', { force: true });
       this.later(sleepNow, 1800);
-      this.later(() => this.showLockScreen(), 4500);
+      this.waitForBed(4500);
     }
     this.hud.refreshNav();
+  }
+
+  /** Показывает экран «Мурзик спит», когда кот уже лёг (или по запасному таймеру на медленных устройствах). */
+  private waitForBed(minMs: number): void {
+    const started = performance.now();
+    const check = (): void => {
+      if (!this.locked || this.lockEl) return;
+      const ready = this.game.cat.mode === 'lying' && performance.now() - started >= minMs;
+      if (ready || performance.now() - started > 15000) this.showLockScreen();
+      else this.later(check, 250);
+    };
+    this.later(check, minMs);
   }
 
   private showLockScreen(): void {

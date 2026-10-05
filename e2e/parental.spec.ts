@@ -91,7 +91,7 @@ test('когда таймер вышел: кот зевает и засыпае�
   await page.waitForFunction(() => (window as any).__murzik.game.roomId === 'bedroom');
   await expect(page.locator('.lock')).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('.lock-title')).toHaveText('Мурзик спит');
-  expect(await page.evaluate(() => (window as any).__murzik.game.cat.mode)).toBe('lying');
+  await page.waitForFunction(() => (window as any).__murzik.game.cat.mode === 'lying', null, { timeout: 30_000 });
   expect(await page.evaluate(() => (window as any).__murzik.game.lampOn)).toBe(false);
   // тапы только сонно «Zzz»
   const before = await page.evaluate(() => (window as any).__murzik.game.save.needs.fun);

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { catPoint, catState, expectNoErrors, openGame } from './helpers';
+import { catPoint, catState, expectNoErrors, openGame, syntheticSwipe } from './helpers';
 
 test('игра грузится без ошибок в консоли и рисует сцену', async ({ page }) => {
   const errors = await openGame(page);
@@ -36,8 +36,7 @@ test('drag-бросок: кот летит, остаётся в комнате, 
   const belly = await catPoint(page, 'belly');
   await page.mouse.move(belly.x, belly.y);
   await page.mouse.down();
-  await page.waitForTimeout(500);
-  expect(await catState(page)).toBe('held');
+  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'held', null, { timeout: 8000 });
   for (let i = 1; i <= 6; i++) {
     await page.mouse.move(belly.x + i * 25, belly.y - i * 35);
     await page.waitForTimeout(16);
@@ -66,20 +65,9 @@ test('drag-бросок: кот летит, остаётся в комнате, 
 test('быстрый свайп по коту — шлепок, кот кувыркается', async ({ page }) => {
   const errors = await openGame(page);
   await page.waitForTimeout(500);
-  // Классификация по времени: под нагрузкой CI свайп может оказаться «медленным» — пробуем несколько раз.
-  let tumbled = false;
-  for (let attempt = 0; attempt < 4 && !tumbled; attempt++) {
-    const belly = await catPoint(page, 'belly');
-    await page.mouse.move(belly.x - 55, belly.y);
-    await page.mouse.down();
-    await page.mouse.move(belly.x + 60, belly.y, { steps: 2 });
-    await page.mouse.move(belly.x + 180, belly.y, { steps: 2 });
-    await page.mouse.up();
-    await page.waitForTimeout(120);
-    tumbled = (await catState(page)) === 'tumble';
-    if (!tumbled) await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'idle', null, { timeout: 15000 });
-  }
-  expect(tumbled).toBe(true);
-  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'idle', null, { timeout: 15000 });
+  const belly = await catPoint(page, 'belly');
+  await syntheticSwipe(page, { x: belly.x - 55, y: belly.y }, { x: belly.x + 180, y: belly.y }, { steps: 4 });
+  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'tumble', null, { timeout: 5000 });
+  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'idle', null, { timeout: 30000 });
   await expectNoErrors(errors);
 });

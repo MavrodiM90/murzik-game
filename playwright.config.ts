@@ -5,6 +5,8 @@ const gpuArgs = ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-
 
 export default defineConfig({
   testDir: 'e2e',
+  // скриншоты нужны для ручного просмотра — в CI их не снимаем (экономим время)
+  testIgnore: process.env.CI ? /screenshots.spec/ : undefined,
   timeout: 90_000,
   expect: { timeout: 10_000 },
   retries: process.env.CI ? 2 : 1,

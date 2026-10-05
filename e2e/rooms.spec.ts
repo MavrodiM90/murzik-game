@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { catPoint, expectNoErrors, openGame } from './helpers';
+import { catPoint, expectNoErrors, openGame, syntheticSwipe } from './helpers';
 
 const roomId = (page: Page): Promise<string> => page.evaluate(() => (window as any).__murzik.game.roomId);
 const need = (page: Page, id: string): Promise<number> => page.evaluate((i) => (window as any).__murzik.game.save.needs[i], id);
@@ -41,11 +41,10 @@ test('свайп по пустому месту листает комнаты', 
   await page.waitForTimeout(400);
   const vp = page.viewportSize()!;
   const y = Math.round(vp.height * 0.3);
-  await page.mouse.move(vp.width * 0.55, y);
-  await page.mouse.down();
-  await page.mouse.move(vp.width * 0.1, y, { steps: 4 });
-  await page.mouse.up();
+  await syntheticSwipe(page, { x: vp.width * 0.55, y }, { x: vp.width * 0.1, y }, { steps: 5 });
   await page.waitForFunction(() => (window as any).__murzik.game.roomId === 'kitchen');
+  await syntheticSwipe(page, { x: vp.width * 0.2, y }, { x: vp.width * 0.8, y }, { steps: 5 });
+  await page.waitForFunction(() => (window as any).__murzik.game.roomId === 'living');
 });
 
 test('кнопки и цели не меньше 64×64', async ({ page }) => {
