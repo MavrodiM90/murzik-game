@@ -196,7 +196,7 @@ export class Hud {
       active = false;
       const dx = e.clientX - sx;
       const dy = e.clientY - sy;
-      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5 && performance.now() - t0 < 1200) {
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5 && performance.now() - t0 < 2000) {
         this.closePanel();
         this.game.stepRoom(dx < 0 ? 1 : -1);
       }

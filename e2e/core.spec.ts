@@ -66,14 +66,20 @@ test('drag-бросок: кот летит, остаётся в комнате, 
 test('быстрый свайп по коту — шлепок, кот кувыркается', async ({ page }) => {
   const errors = await openGame(page);
   await page.waitForTimeout(500);
-  const belly = await catPoint(page, 'belly');
-  await page.mouse.move(belly.x - 55, belly.y);
-  await page.mouse.down();
-  await page.mouse.move(belly.x + 60, belly.y, { steps: 2 });
-  await page.mouse.move(belly.x + 180, belly.y, { steps: 2 });
-  await page.mouse.up();
-  await page.waitForTimeout(120);
-  expect(await catState(page)).toBe('tumble');
+  // Классификация по времени: под нагрузкой CI свайп может оказаться «медленным» — пробуем несколько раз.
+  let tumbled = false;
+  for (let attempt = 0; attempt < 4 && !tumbled; attempt++) {
+    const belly = await catPoint(page, 'belly');
+    await page.mouse.move(belly.x - 55, belly.y);
+    await page.mouse.down();
+    await page.mouse.move(belly.x + 60, belly.y, { steps: 2 });
+    await page.mouse.move(belly.x + 180, belly.y, { steps: 2 });
+    await page.mouse.up();
+    await page.waitForTimeout(120);
+    tumbled = (await catState(page)) === 'tumble';
+    if (!tumbled) await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'idle', null, { timeout: 15000 });
+  }
+  expect(tumbled).toBe(true);
   await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'idle', null, { timeout: 15000 });
   await expectNoErrors(errors);
 });

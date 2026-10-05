@@ -203,7 +203,7 @@ body {
 /* ---------- стрелки и боковые кнопки ---------- */
 .btn-arrow {
   position: absolute;
-  top: 58%;
+  top: 64%;
   width: 76px;
   height: 76px;
   background: rgba(255, 255, 255, 0.28);
@@ -1194,4 +1194,28 @@ body {
 #ui.locked .btn-arrow,
 #ui.locked .hud-gear {
   visibility: hidden;
+}
+
+@media (max-height: 760px) {
+  .lock-sky {
+    padding-top: calc(var(--safe-top) + 64px);
+  }
+  .lock-moon {
+    width: 96px;
+    height: 96px;
+  }
+  .lock-title {
+    font-size: 30px;
+    margin-top: 8px;
+  }
+  .lock-zzz {
+    width: 44px;
+    height: 44px;
+  }
+  .lock-left {
+    font-size: 14px;
+  }
+  .lock {
+    background: linear-gradient(rgba(12, 16, 52, 0.97) 0, rgba(14, 18, 58, 0.95) 38%, rgba(20, 26, 80, 0.5) 46%, rgba(20, 26, 80, 0) 52%);
+  }
 }

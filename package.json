@@ -10,7 +10,7 @@
     "preview": "vite preview --port 4173 --strictPort",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run build && playwright test",
     "icons": "node scripts/gen-icons.mjs",
     "size": "node scripts/check-size.mjs"
   },

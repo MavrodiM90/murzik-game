@@ -191,6 +191,8 @@ export class Game implements InputHost {
     if (this.roomId === 'living') this.updateBall(dt);
     this.particles.update(dt);
     this.tickNeeds(dt);
+    // пена высыхает, если кота не смыли и он ушёл из ванной
+    if (this.cat.foam > 0 && this.roomId !== 'bath') this.cat.setFoam(this.cat.foam - dt * 0.05);
     for (const f of this.onUpdate) f(dt, now);
     this.stage.render();
     this.saveTimer += dt * 1000;
@@ -282,7 +284,7 @@ export class Game implements InputHost {
         break;
       case 'sneeze':
         for (let i = 0; i < n; i++)
-          P.spawn('drop', base, { x: rnd(-1.5, 1.5), y: rnd(-0.2, 1.6), z: rnd(2, 5) }, { life: 0.7, size: rnd(0.15, 0.3), gravity: 8 });
+          P.spawn('drop', { x: base.x, y: base.y - 0.35, z: base.z }, { x: rnd(-1.2, 1.2), y: rnd(-2.2, 0.2), z: rnd(2, 5) }, { life: 0.6, size: rnd(0.1, 0.2), gravity: 8 });
         P.spawn('puff', base, { x: 0, y: 0.3, z: 1.5 }, { life: 0.7, size: 0.7, grow: 1.2, color: 0xffffff });
         break;
       case 'crumbs':
