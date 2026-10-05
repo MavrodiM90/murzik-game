@@ -15,7 +15,7 @@ export default defineConfig({
   reporter: [['list']],
   outputDir: 'test-results',
   use: {
-    baseURL: `http://localhost:${PORT}/murzik-game/`,
+    baseURL: process.env.E2E_BASE_URL ?? `http://localhost:${PORT}/murzik-game/`,
     launchOptions: { args: gpuArgs },
     serviceWorkers: 'allow',
   },
