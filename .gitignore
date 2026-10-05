@@ -8,3 +8,7 @@ playwright-report
 *.log
 .DS_Store
 scripts/_shot.mjs
+scripts/_shots.mjs
+scripts/_shots2.mjs
+scripts/_patch1.mjs
+scripts/_potty.mjs

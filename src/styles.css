@@ -57,3 +57,304 @@ body {
 #ui > * {
   pointer-events: auto;
 }
+
+/* ---------- кнопки ---------- */
+.btn {
+  position: relative;
+  width: var(--btn);
+  height: var(--btn);
+  min-width: 64px;
+  min-height: 64px;
+  padding: 10px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: linear-gradient(#ffd08a, #ffa94d);
+  box-shadow: 0 6px 0 rgba(120, 60, 10, 0.35), 0 8px 14px rgba(0, 0, 0, 0.25);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 90ms;
+  color: inherit;
+}
+.btn:active {
+  transform: translateY(3px) scale(0.94);
+  box-shadow: 0 2px 0 rgba(120, 60, 10, 0.35);
+}
+.btn svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+.btn[hidden] {
+  display: none;
+}
+
+.hud-top {
+  position: absolute;
+  top: calc(var(--safe-top) + 8px);
+  left: calc(var(--safe-left) + 10px);
+  right: calc(var(--safe-right) + 10px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+.hud-top > * {
+  pointer-events: auto;
+}
+.btn-home {
+  background: linear-gradient(#ffe4a8, #ffb561);
+}
+.btn-home.dim {
+  opacity: 0.55;
+}
+.coins {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 54px;
+  padding: 0 16px 0 8px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 3px solid #ffd23f;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--ink);
+}
+.coins .coin-ic {
+  width: 38px;
+  height: 38px;
+  display: block;
+}
+.coins.bump {
+  animation: bump 380ms ease-out;
+}
+@keyframes bump {
+  40% {
+    transform: scale(1.18);
+  }
+}
+
+/* ---------- шкалы ---------- */
+.needs {
+  position: absolute;
+  top: calc(var(--safe-top) + 86px);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.need {
+  --p: 100%;
+  --c: #3fc84f;
+  width: 64px;
+  height: 64px;
+  padding: 5px;
+  background: none;
+  border: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.need-in {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: rgba(60, 40, 30, 0.45);
+  overflow: hidden;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+.need .fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--p);
+  background: var(--c);
+  transition: height 300ms, background 300ms;
+}
+.need .need-ic {
+  position: absolute;
+  inset: 5px;
+  display: block;
+}
+.need .need-ic svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.need.low .need-in {
+  animation: pulse 0.9s ease-in-out infinite;
+  border-color: #fff36b;
+}
+@keyframes pulse {
+  50% {
+    transform: scale(1.22);
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.45), 0 3px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* ---------- стрелки и боковые кнопки ---------- */
+.btn-arrow {
+  position: absolute;
+  top: 46%;
+  width: 76px;
+  height: 76px;
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  padding: 18px;
+  animation: glow 2.4s ease-in-out infinite;
+}
+.btn-arrow.left {
+  left: calc(var(--safe-left) + 4px);
+}
+.btn-arrow.right {
+  right: calc(var(--safe-right) + 4px);
+}
+@keyframes glow {
+  50% {
+    background: rgba(255, 255, 255, 0.5);
+  }
+}
+.side {
+  position: absolute;
+  top: calc(var(--safe-top) + 160px);
+  right: calc(var(--safe-right) + 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+.side > * {
+  pointer-events: auto;
+}
+.tools {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--safe-bottom) + 16px);
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  pointer-events: none;
+}
+.tools > * {
+  pointer-events: auto;
+}
+.btn-tool {
+  width: 84px;
+  height: 84px;
+  padding: 12px;
+}
+.btn-tool.on {
+  background: linear-gradient(#a8ffb8, #4cd470);
+  transform: translateY(-6px) scale(1.06);
+}
+
+/* ---------- лоток еды ---------- */
+.tray {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--safe-bottom) + 112px);
+  padding: 14px 14px 14px;
+  border-radius: 28px;
+  background: rgba(255, 248, 236, 0.95);
+  border: 4px solid #fff;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+  animation: rise 220ms ease-out;
+}
+@keyframes rise {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+}
+.tray-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 4px 8px;
+  touch-action: pan-x;
+  scrollbar-width: none;
+}
+.tray-row::-webkit-scrollbar {
+  display: none;
+}
+.tray .btn-close {
+  position: absolute;
+  top: -26px;
+  right: -4px;
+  width: 64px;
+  height: 64px;
+  padding: 4px;
+  background: #ff7a7a;
+}
+.tray-item {
+  position: relative;
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  padding: 8px;
+  border-radius: 22px;
+  touch-action: pan-x;
+  border: 3px solid #ffd9a8;
+  background: #fff;
+  cursor: grab;
+}
+.tray-item svg {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.tray-item.lifted {
+  opacity: 0.4;
+}
+.badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 13px;
+  background: #4da3ff;
+  color: #fff;
+  font: 800 16px/26px system-ui, sans-serif;
+  text-align: center;
+  font-style: normal;
+}
+.fav {
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  width: 26px;
+  height: 26px;
+}
+.ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 88px;
+  height: 88px;
+  pointer-events: none;
+  z-index: 50;
+  filter: drop-shadow(0 8px 6px rgba(0, 0, 0, 0.35));
+  will-change: transform;
+}
+.ghost svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* свет выключен */
+.night .btn:not(.btn-tool) {
+  filter: brightness(0.75);
+}

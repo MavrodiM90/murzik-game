@@ -140,5 +140,5 @@ export const PARENTAL = {
   timerOptionsMin: [0, 10, 15, 20, 30, 45] as const,
   pauseOptions: ['30m', '1h', '2h', 'tomorrow'] as const,
   tomorrowHour: 6,
-  clockBackTolerationMs: 0,
+  clockBackTolerationMs: 60_000,
 } as const;

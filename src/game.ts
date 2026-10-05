@@ -1,15 +1,32 @@
 import { Vector3 } from 'three';
 import { Synth } from './audio/synth';
-import { FLOOR_COLORS, WALL_COLORS, WORLD } from './config';
+import {
+  FLOOR_COLORS,
+  FOOD_GAIN,
+  NEED_IDS,
+  SLEEP_GAIN_PER_SEC,
+  TIMING,
+  TOILET_AFTER_EAT_COST,
+  VITAMIN_GAIN,
+  WALL_COLORS,
+  WORLD,
+  type NeedId,
+} from './config';
 import { CatInput, type InputHost } from './input';
+import { getItem } from './logic/catalog';
+import { consumeFood, earn } from './logic/economy';
 import type { Part } from './logic/gestures';
 import { clamp, damp, randRange } from './logic/math';
+import { decayNeeds, gain, moodFromNeeds, offlineDecay } from './logic/needs';
+import { loadSave, writeSave, type RoomKey, type SaveData } from './logic/save';
 import { makeBounds } from './logic/throwPhysics';
 import { Cat, type CatEvent, type FxAnchor, type FxName } from './render/cat';
 import { Particles } from './render/particles';
 import { Ball } from './render/props';
 import { createRooms, roomCenterX, ROOM_ORDER, type Room, type RoomId } from './render/rooms';
 import { Stage } from './render/stage';
+
+export type GameEvent = 'coins' | 'needs' | 'room' | 'appearance' | 'sleep' | 'inventory';
 
 export class Game implements InputHost {
   readonly stage: Stage;
@@ -19,6 +36,7 @@ export class Game implements InputHost {
   readonly rooms: Record<RoomId, Room>;
   readonly input: CatInput;
   readonly ball = new Ball();
+  save: SaveData;
   roomId: RoomId = 'living';
   private camX = 0;
   private running = false;
@@ -30,31 +48,101 @@ export class Game implements InputHost {
   /** Если >0 — ввод по коту выключен (оверлеи, мини-игры, экран сна) */
   inputLocks = 0;
   frame = 0;
-  onUpdate: ((dt: number) => void)[] = [];
+  onUpdate: ((dt: number, now: number) => void)[] = [];
+  private listeners = new Map<GameEvent, Set<() => void>>();
+  private saveTimer = 0;
+  private needsEmit = 0;
+  // сон
+  sleepRequested = false;
+  private night = 0;
+  // горшок
+  private pottyPending = false;
+  /** Хук HUD для нажатия на объекты комнаты (холодильник, лампа, ТВ …) */
+  onTapExtraHook: ((id: string) => void) | null = null;
+  /** Хук для инструментов ванной: если вернёт true — касание обработано */
+  toolActive = false;
 
   constructor(readonly canvas: HTMLCanvasElement) {
+    this.save = loadSave();
     this.stage = new Stage(canvas);
     this.particles = new Particles(this.stage.scene);
-    this.rooms = createRooms(
-      Object.fromEntries(ROOM_ORDER.map((r) => [r, WALL_COLORS[0].color])) as Record<RoomId, number>,
-      Object.fromEntries(ROOM_ORDER.map((r) => [r, FLOOR_COLORS[0].color])) as Record<RoomId, number>,
-    );
+    const wall = {} as Record<RoomId, number>;
+    const floor = {} as Record<RoomId, number>;
+    for (const r of ROOM_ORDER) {
+      wall[r] = WALL_COLORS.find((w) => w.id === this.save.wall[r as RoomKey])?.color ?? WALL_COLORS[0].color;
+      floor[r] = FLOOR_COLORS.find((f) => f.id === this.save.floor[r as RoomKey])?.color ?? FLOOR_COLORS[0].color;
+    }
+    this.rooms = createRooms(wall, floor);
     for (const r of ROOM_ORDER) this.stage.scene.add(this.rooms[r].group);
     this.rooms.living.group.add(this.ball.group);
     this.ball.onBounce = (s) => this.synth.play('boop', Math.min(1, s / 12));
     this.stage.scene.add(this.cat.group);
     this.cat.setBounds(makeBounds());
     this.cat.resetToStand(0);
+    this.cat.setFur(this.save.fur);
     this.cat.onEvent = (e) => this.onCatEvent(e);
+    this.cat.onActionEnd = (n) => this.onCatActionEnd(n);
     this.input = new CatInput(this);
     this.input.attach(canvas);
+    this.synth.setVolume(this.save.settings.volume);
+
+    // шкалы за время отсутствия: падают максимум до 40%
+    const now = Date.now();
+    offlineDecay(this.save.needs, now - this.save.lastSeen);
+    this.save.lastSeen = now;
+    this.cat.mood = moodFromNeeds(this.save.needs);
+
     window.addEventListener('resize', () => this.stage.resize());
     window.addEventListener('orientationchange', () => setTimeout(() => this.stage.resize(), 200));
-    document.addEventListener('visibilitychange', () => (document.hidden ? this.pause() : this.resume()));
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.persist();
+        this.pause();
+      } else {
+        this.onReturn();
+        this.resume();
+      }
+    });
+    window.addEventListener('pagehide', () => this.persist());
+  }
+
+  // ---------------- события для HUD ----------------
+  on(ev: GameEvent, fn: () => void): void {
+    let s = this.listeners.get(ev);
+    if (!s) this.listeners.set(ev, (s = new Set()));
+    s.add(fn);
+  }
+  emit(ev: GameEvent): void {
+    this.listeners.get(ev)?.forEach((f) => f());
+  }
+
+  /** Возвращение в игру: шкалы за время отсутствия. */
+  private onReturn(): void {
+    const now = Date.now();
+    offlineDecay(this.save.needs, now - this.save.lastSeen);
+    this.save.lastSeen = now;
+    this.emit('needs');
+  }
+
+  persist(): void {
+    this.save.lastSeen = Date.now();
+    writeSave(this.save);
   }
 
   // ---------------- цикл ----------------
   start(): void {
+    this.running = false;
+    this.resume();
+  }
+
+  pause(): void {
+    this.running = false;
+    cancelAnimationFrame(this.raf);
+    this.synth.play('purrStop');
+  }
+
+  resume(): void {
+    if (this.running) return;
     this.running = true;
     this.last = performance.now();
     const loop = (now: number): void => {
@@ -67,27 +155,12 @@ export class Game implements InputHost {
     this.raf = requestAnimationFrame(loop);
   }
 
-  pause(): void {
-    this.running = false;
-    cancelAnimationFrame(this.raf);
-  }
-
-  resume(): void {
-    if (this.running) return;
-    this.running = true;
-    this.last = performance.now();
-    const loop = (now: number): void => {
-      if (!this.running) return;
-      this.raf = requestAnimationFrame(loop);
-      const dt = Math.min((now - this.last) / 1000, 0.05);
-      this.last = now;
-      this.tick(dt, now);
-    };
-    this.raf = requestAnimationFrame(loop);
-  }
-
   get isRunning(): boolean {
     return this.running;
+  }
+
+  get sleeping(): boolean {
+    return this.cat.mode === 'lying';
   }
 
   tick(dt: number, now: number): void {
@@ -96,12 +169,43 @@ export class Game implements InputHost {
     this.camX = Math.abs(this.camX - target) < 0.002 ? target : damp(this.camX, target, 9, dt);
     this.stage.setCameraX(this.camX);
     this.input.update(dt, now);
+    this.updateSleep(dt);
     this.cat.update(dt, this.camX);
     for (const r of ROOM_ORDER) this.rooms[r].update(dt);
     if (this.roomId === 'living') this.updateBall(dt);
     this.particles.update(dt);
-    for (const f of this.onUpdate) f(dt);
+    this.tickNeeds(dt);
+    for (const f of this.onUpdate) f(dt, now);
     this.stage.render();
+    this.saveTimer += dt * 1000;
+    if (this.saveTimer >= TIMING.saveIntervalMs) {
+      this.saveTimer = 0;
+      this.persist();
+    }
+  }
+
+  // ---------------- шкалы ----------------
+  private tickNeeds(dt: number): void {
+    const n = this.save.needs;
+    const sleeping = this.sleeping;
+    decayNeeds(n, dt / 60, sleeping);
+    if (sleeping) gain(n, 'sleep', SLEEP_GAIN_PER_SEC * dt);
+    this.cat.mood = damp(this.cat.mood, moodFromNeeds(n), 1.5, dt);
+    this.needsEmit += dt;
+    if (this.needsEmit > 0.25) {
+      this.needsEmit = 0;
+      this.emit('needs');
+    }
+  }
+
+  addNeed(id: NeedId, amount: number): void {
+    gain(this.save.needs, id, amount);
+    this.emit('needs');
+  }
+
+  addCoins(n: number): void {
+    earn(this.save, n);
+    this.emit('coins');
   }
 
   // ---------------- мяч ----------------
@@ -113,7 +217,7 @@ export class Game implements InputHost {
     else this.ballActiveFor = Math.max(0, this.ballActiveFor - dt);
     this.chaseCooldown = Math.max(0, this.chaseCooldown - dt);
     const cat = this.cat;
-    if (cat.mode !== 'stand' || cat.busy || this.ballActiveFor <= 0) return;
+    if (cat.mode !== 'stand' || cat.busy || this.ballActiveFor <= 0 || this.inputLocks > 0) return;
     const dx = ball.x - cat.body.x;
     if (Math.abs(dx) > 1.25) {
       cat.walkTo(ball.x - Math.sign(dx) * 1.0, undefined, Math.abs(dx) > 3);
@@ -124,6 +228,7 @@ export class Game implements InputHost {
       cat.play('kick');
       ball.kick(dir * randRange(6, 9), randRange(8, 12));
       this.synth.play('hop');
+      this.addNeed('fun', 1.5);
       this.particles.burst('spark', { x: ball.x + this.camX, y: ball.y, z: 1.2 }, 3, 2, { life: 0.5, size: 0.3 });
     }
   }
@@ -132,6 +237,14 @@ export class Game implements InputHost {
   private onCatEvent(e: CatEvent): void {
     if (e.kind === 'sfx') this.synth.play(e.name, e.arg);
     else if (e.kind === 'fx') this.fx(e.name, e.at, e.n ?? 3);
+  }
+
+  private onCatActionEnd(name: string): void {
+    if (name === 'potty' && this.pottyPending) {
+      this.pottyPending = false;
+      this.save.needs.toilet = 100;
+      this.addNeed('fun', 3);
+    }
   }
 
   fx(name: FxName, anchor: FxAnchor, n: number): void {
@@ -185,7 +298,7 @@ export class Game implements InputHost {
 
   // ---------------- InputHost ----------------
   canInteract(): boolean {
-    return this.inputLocks === 0;
+    return this.inputLocks === 0 && !this.toolActive;
   }
 
   onFirstGesture(): void {
@@ -220,19 +333,23 @@ export class Game implements InputHost {
     switch (part) {
       case 'nose':
         cat.play('sneeze');
+        this.addNeed('fun', 1);
         break;
       case 'belly':
       case 'body':
         cat.play('giggle');
+        this.addNeed('fun', 2);
         break;
       case 'armL':
       case 'armR':
         cat.side = part === 'armR' ? 1 : -1;
         cat.play('highFive');
+        this.addNeed('fun', 2);
         break;
       case 'footL':
       case 'footR':
         cat.play('giggle');
+        this.addNeed('fun', 1);
         break;
       case 'tail':
         cat.play('tailHuff');
@@ -241,6 +358,7 @@ export class Game implements InputHost {
         cat.play('pet', { duration: 1.0 });
         cat.fx('hearts', 'head', 2);
         cat.sfx('meowShort');
+        this.addNeed('fun', 1);
         break;
       case 'earL':
       case 'earR':
@@ -249,7 +367,7 @@ export class Game implements InputHost {
         cat.sfx('meowShort');
         break;
       case 'ball':
-        this.ball.kick(world.x > this.ball.x + this.camX * 0 ? -3 : 3, 11);
+        this.ball.kick(world.x > this.ball.x ? -3 : 3, 11);
         this.synth.play('hop');
         break;
       default:
@@ -257,12 +375,15 @@ export class Game implements InputHost {
     }
   }
 
-  onTapExtra(_id: string): void {
-    /* переопределяется HUD'ом */
+  onTapExtra(id: string): void {
+    if (this.sleeping && id !== 'lamp') return;
+    this.onTapExtraHook?.(id);
   }
 
   onSlap(dirX: number): void {
+    if (this.sleeping) return;
     this.cat.slap(dirX);
+    this.addNeed('fun', 2);
   }
 
   onGrab(world: Vector3): void {
@@ -275,13 +396,15 @@ export class Game implements InputHost {
 
   onRelease(vx: number, vy: number): void {
     this.cat.release(vx, vy);
+    if (Math.hypot(vx, vy) > 8) this.addNeed('fun', 3);
   }
 
-  onPet(): void {
+  onPet(dist: number): void {
     const cat = this.cat;
     if (cat.mode !== 'stand') return;
     if (cat.actionName !== 'pet') cat.play('pet');
     cat.extend('pet', 0.55);
+    this.addNeed('fun', dist * 0.02);
   }
 
   onPetEnd(): void {
@@ -291,17 +414,91 @@ export class Game implements InputHost {
   onTickle(): void {
     if (this.cat.mode === 'lying') return;
     this.cat.play('laugh', { force: true });
+    this.addNeed('fun', 6);
   }
 
   onDoubleTapFloor(): void {
     this.cat.jump();
   }
 
+  // ---------------- еда и лекарство ----------------
+  /** Покормить. Возвращает false, если порций не осталось. */
+  feed(foodId: string): boolean {
+    const item = getItem(foodId);
+    if (!item || item.kind !== 'food' || this.sleeping) return false;
+    if (!consumeFood(this.save, foodId)) return false;
+    const fav = this.save.favoriteFood === foodId;
+    const amount = fav ? FOOD_GAIN.favorite : item.disliked ? FOOD_GAIN.disliked : FOOD_GAIN.normal;
+    this.addNeed('food', amount);
+    this.save.needs.toilet = clamp(this.save.needs.toilet - TOILET_AFTER_EAT_COST, 0, 100);
+    this.cat.stopWalking();
+    this.cat.play(fav ? 'eatFavorite' : item.disliked ? 'eatDisliked' : 'eat', { force: true });
+    this.emit('inventory');
+    return true;
+  }
+
+  /** Витаминка из аптечки — единственное, что лечит. */
+  giveVitamin(): void {
+    if (this.sleeping) return;
+    this.addNeed('health', VITAMIN_GAIN);
+    this.cat.stopWalking();
+    this.cat.play('eat', { force: true });
+    this.fx('sparkle', 'head', 6);
+    this.synth.play('sparkle');
+  }
+
+  // ---------------- горшок ----------------
+  usePotty(): void {
+    const cat = this.cat;
+    if (this.sleeping || cat.mode !== 'stand' || cat.actionName === 'potty') return;
+    const x = 2.2;
+    this.pottyPending = true;
+    cat.walkTo(x, () => {
+      cat.play('potty', { force: true });
+    });
+  }
+
+  // ---------------- сон ----------------
+  /** Лампа: выкл → кот идёт спать; вкл → просыпается. */
+  setLampOn(on: boolean): void {
+    this.rooms.bedroom.setLamp(on);
+    this.sleepRequested = !on;
+    if (on) {
+      if (this.cat.mode === 'lying') this.cat.wakeUp();
+    } else this.synth.play('click');
+    this.emit('sleep');
+  }
+
+  get lampOn(): boolean {
+    return this.rooms.bedroom.lamp;
+  }
+
+  private updateSleep(dt: number): void {
+    const target = this.sleepRequested ? 1 : 0;
+    this.night = damp(this.night, target, 2.5, dt);
+    this.stage.setNight(this.night);
+    const cat = this.cat;
+    cat.lightsOff = this.sleepRequested;
+    if (this.sleepRequested && cat.mode === 'stand' && !cat.busy && this.roomId === 'bedroom') {
+      const bedX = 0.3;
+      if (Math.abs(cat.body.x - bedX) < 0.12) {
+        cat.lieDown(bedX, 2.75);
+        this.emit('sleep');
+      } else cat.walkTo(bedX);
+    }
+  }
+
   // ---------------- комнаты ----------------
+  get navLocked(): boolean {
+    return this.sleepRequested || this.sleeping;
+  }
+
   goToRoom(id: RoomId): void {
-    if (id === this.roomId) return;
+    if (id === this.roomId || this.navLocked) return;
     this.roomId = id;
     this.cat.stopWalking();
+    this.pottyPending = false;
+    this.emit('room');
   }
 
   roomIndex(): number {
@@ -311,6 +508,10 @@ export class Game implements InputHost {
   stepRoom(dir: 1 | -1): void {
     const i = clamp(this.roomIndex() + dir, 0, ROOM_ORDER.length - 1);
     this.goToRoom(ROOM_ORDER[i]!);
+  }
+
+  get needIds(): readonly NeedId[] {
+    return NEED_IDS;
   }
 
   get world(): typeof WORLD {

@@ -367,8 +367,8 @@ export class Room {
     g.add(bear);
     // мобиль-звёзды
     for (let i = 0; i < 3; i++) {
-      mk(g, cylGeo(0.02, 0.02, 1.2 + i * 0.4, 4), flatMat(0xffffff), 0.9 + i * 1.1, 10.8 - i * 0.2, -2.0, false);
-      const s = mk(g, sphereGeo(0.22, 8), flatMat(0xffe066), 0.9 + i * 1.1, 10.1 - i * 0.5, -2.0, false);
+      mk(g, cylGeo(0.02, 0.02, 1.0 + i * 0.5, 4), flatMat(0xffffff), 0.9 + i * 1.1, 9.4 - i * 0.25, -2.0, false);
+      const s = mk(g, sphereGeo(0.22, 8), flatMat(0xffe066), 0.9 + i * 1.1, 8.9 - i * 0.5, -2.0, false);
       this.bob.push({ m: s, y: s.position.y, ph: i * 2 });
     }
     void capsuleGeo;

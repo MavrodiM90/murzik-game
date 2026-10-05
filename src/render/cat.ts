@@ -212,6 +212,9 @@ export class Cat {
   runMode = false;
   /** 0..1 — внешний сигнал громкости для «повтора голоса» */
   mouthDrive = 0;
+  /** 0..1 — рот приоткрывается, когда еду подносят близко */
+  mouthHint = 0;
+  onActionEnd: ((name: ActionName) => void) | null = null;
   mood = 0; // 0..1 «чуть-чуть грустит»
   foam = 0; // 0..1
   private sigh = 6;
@@ -554,8 +557,10 @@ export class Cat {
 
   endAction(name?: ActionName): void {
     if (!this.act || (name && this.act.name !== name)) return;
-    ACTIONS[this.act.name].end?.(this);
+    const ended = this.act.name;
+    ACTIONS[ended].end?.(this);
     this.act = null;
+    this.onActionEnd?.(ended);
     this.state = this.mode === 'lying' ? 'sleep' : 'idle';
     this.idleIn = randRange(TIMING.idleMinSec, TIMING.idleMaxSec);
   }
@@ -1020,7 +1025,7 @@ export class Cat {
       pg.scale.setScalar(c.pupilS);
     }
     // рот
-    const mo = clamp(c.mouth + this.mouthDrive * 0.9, 0, 1);
+    const mo = clamp(c.mouth + this.mouthDrive * 0.9 + this.mouthHint * 0.75, 0, 1);
     this.mouthIn.visible = mo > 0.07;
     this.mouthIn.scale.set(1 + mo * 0.25, Math.max(0.01, mo), 1);
     this.mouthIn.position.y = -mo * 0.1;
