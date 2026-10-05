@@ -203,7 +203,7 @@ body {
 /* ---------- стрелки и боковые кнопки ---------- */
 .btn-arrow {
   position: absolute;
-  top: 46%;
+  top: 58%;
   width: 76px;
   height: 76px;
   background: rgba(255, 255, 255, 0.28);
@@ -916,4 +916,282 @@ body {
 }
 .btn-ear[hidden] {
   display: none;
+}
+
+/* ---------- родительский контроль ---------- */
+.gear {
+  position: absolute;
+  top: calc(var(--safe-top) + 8px);
+  left: 50%;
+  margin-left: -32px;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: none;
+  opacity: 0.55;
+  z-index: 13;
+}
+.gear-ic {
+  position: absolute;
+  inset: 18px;
+  display: block;
+}
+.gear-ic svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.gear::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: conic-gradient(#4cd470 var(--deg, 0deg), transparent 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px));
+}
+.gear.holding {
+  opacity: 1;
+}
+#ui.mg-on .hud-gear {
+  display: none;
+}
+.pcheck,
+.pset {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgba(30, 20, 14, 0.6);
+  padding: 12px;
+  touch-action: pan-y;
+}
+.pcard {
+  position: relative;
+  width: min(100%, 360px);
+  padding: 22px 18px 20px;
+  border-radius: 30px;
+  background: #fff8ec;
+  border: 5px solid #fff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  color: var(--ink);
+}
+.pcard-wide {
+  width: min(100%, 400px);
+  max-height: 100%;
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+.pclose {
+  position: absolute;
+  top: -22px;
+  right: -10px;
+  width: 64px;
+  height: 64px;
+  padding: 4px;
+  background: #ff7a7a;
+}
+.ptitle {
+  font: 800 44px/1.1 system-ui, sans-serif;
+  text-align: center;
+}
+.ptitle.small {
+  padding-right: 40px;
+  text-align: left;
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+.pdisplay {
+  margin: 14px auto;
+  min-width: 140px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: #fff;
+  border: 3px solid #ffd9a8;
+  font: 800 44px/1.2 ui-monospace, monospace;
+  text-align: center;
+}
+.ppad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.pkey {
+  height: 68px;
+  border-radius: 20px;
+  border: 3px solid #ffd9a8;
+  background: #fff;
+  font: 800 32px system-ui, sans-serif;
+  color: var(--ink);
+}
+.pkey:active {
+  background: #ffe4a8;
+}
+.pkey.ok {
+  background: #8fe3a3;
+  border-color: #4cd470;
+}
+.prow {
+  margin: 12px 0;
+}
+.plabel {
+  font: 700 17px system-ui, sans-serif;
+  margin-bottom: 6px;
+}
+.pinfo {
+  margin-top: 6px;
+  font: 600 15px system-ui, sans-serif;
+  opacity: 0.75;
+}
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.seg button {
+  flex: 1 1 auto;
+  min-width: 64px;
+  height: 56px;
+  padding: 0 10px;
+  border-radius: 16px;
+  border: 3px solid #ffd9a8;
+  background: #fff;
+  font: 700 17px system-ui, sans-serif;
+  color: var(--ink);
+}
+.seg button.on {
+  background: #ffcf7a;
+  border-color: #ff9f1c;
+}
+.preset {
+  width: 100%;
+  height: 60px;
+  margin-top: 8px;
+  border-radius: 18px;
+  border: 3px solid #ff9a9a;
+  background: #ffe4e4;
+  font: 700 18px system-ui, sans-serif;
+  color: #a02020;
+}
+.pconfirm {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(30, 20, 14, 0.75);
+  z-index: 2;
+}
+.pconfirm-box {
+  width: min(92%, 340px);
+}
+.prow-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.pbtn {
+  flex: 1;
+  height: 64px;
+  border-radius: 18px;
+  border: 3px solid #ffd9a8;
+  background: #fff;
+  font: 800 18px system-ui, sans-serif;
+  color: var(--ink);
+}
+.pbtn.danger {
+  background: #ff7a7a;
+  border-color: #d94a4a;
+  color: #fff;
+}
+
+/* ---------- экран «Мурзик спит» ---------- */
+.lock {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: linear-gradient(rgba(12, 16, 52, 0.97) 0, rgba(14, 18, 58, 0.95) 47%, rgba(20, 26, 80, 0.5) 58%, rgba(20, 26, 80, 0) 66%);
+  animation: fadeIn 900ms ease-out;
+  touch-action: none;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+.lock-sky {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 58%;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding-top: calc(var(--safe-top) + 84px);
+}
+.lock-sky > i {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  animation: twinkle 2.4s ease-in-out infinite;
+}
+.lock-sky > i svg {
+  width: 100%;
+  height: 100%;
+}
+@keyframes twinkle {
+  50% {
+    transform: scale(1.7);
+    opacity: 0.45;
+  }
+}
+.lock-moon {
+  width: 150px;
+  height: 150px;
+  filter: drop-shadow(0 0 24px rgba(255, 233, 150, 0.7));
+  animation: floaty 4s ease-in-out infinite;
+}
+.lock-moon svg {
+  width: 100%;
+  height: 100%;
+}
+@keyframes floaty {
+  50% {
+    transform: translateY(-8px) rotate(-4deg);
+  }
+}
+.lock-title {
+  margin-top: 14px;
+  font: 900 40px system-ui, sans-serif;
+  color: #fff6d0;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+.lock-zzz {
+  width: 64px;
+  height: 64px;
+  margin-top: 4px;
+  animation: floaty 3s ease-in-out infinite;
+}
+.lock-zzz svg {
+  width: 100%;
+  height: 100%;
+}
+.lock-left {
+  margin-top: 6px;
+  font: 600 16px system-ui, sans-serif;
+  color: rgba(255, 255, 255, 0.65);
+}
+.lock .gear {
+  z-index: 3;
+}
+
+#ui.locked .tools,
+#ui.locked .side,
+#ui.locked .needs,
+#ui.locked .hud-top,
+#ui.locked .btn-arrow,
+#ui.locked .hud-gear {
+  visibility: hidden;
 }

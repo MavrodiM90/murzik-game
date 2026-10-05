@@ -153,6 +153,13 @@ export class MiniGames implements Panel {
     this.game.cat.mouthHint = 0;
   }
 
+  /** Прервать игру без награды (например, когда вышло время родительского таймера). */
+  finishNowQuiet(): void {
+    if (this.playing) this.abort();
+    this.closeMenu(true);
+    this.closeResult();
+  }
+
   private abort(): void {
     if (!this.playing) return;
     this.teardown();

@@ -6,6 +6,7 @@ import { BathTools } from './bathTools';
 import { FoodTray } from './foodTray';
 import { icon } from './icons';
 import { MiniGames } from './minigames';
+import { Parental } from './parental';
 import { ShopPanel } from './shop';
 
 export interface Panel {
@@ -46,6 +47,7 @@ export class Hud {
   readonly tray: FoodTray;
   readonly shop: ShopPanel;
   readonly minigames: MiniGames;
+  readonly parental: Parental;
   private ear!: HTMLButtonElement;
   private chestBtn: HTMLButtonElement | null = null;
   private chestAcc = 0;
@@ -62,6 +64,7 @@ export class Hud {
     this.bath = new BathTools(game, this);
     this.tray = new FoodTray(game, this);
     this.shop = new ShopPanel(game, this);
+    this.parental = new Parental(game, this);
     this.minigames = new MiniGames(game, this);
     this.ear = makeButton('ear', 'Повторюшка', 'btn-ear', () => {
       if (!game.save.settings.voiceRepeat) return;

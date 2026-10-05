@@ -134,7 +134,11 @@ export class Game implements InputHost {
     this.emit('needs');
   }
 
+  /** true после сброса прогресса — чтобы pagehide не записал старое сохранение обратно */
+  resetting = false;
+
   persist(): void {
+    if (this.resetting) return;
     this.save.lastSeen = Date.now();
     writeSave(this.save);
   }
