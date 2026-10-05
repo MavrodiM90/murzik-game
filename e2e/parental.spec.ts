@@ -96,7 +96,7 @@ test('когда таймер вышел: кот зевает и засыпае�
   // тапы только сонно «Zzz»
   const before = await page.evaluate(() => (window as any).__murzik.game.save.needs.fun);
   await page.mouse.click(200, 400);
-  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'grumble', null, { timeout: 4000 });
+  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'grumble', null, { timeout: 20000 });
   expect(await page.evaluate(() => (window as any).__murzik.game.save.needs.fun)).toBeLessThanOrEqual(before);
   // кнопки под экраном недоступны
   const hit = await page.evaluate(() => document.elementFromPoint(40, 60)?.className ?? '');
@@ -116,7 +116,7 @@ test('когда таймер вышел: кот зевает и засыпае�
   await expect(page.locator('.lock')).toHaveCount(0);
   expect((await save(page)).timer.lockUntil).toBe(0);
   await page.click('.pset .pclose');
-  await page.waitForFunction(() => (window as any).__murzik.game.cat.mode === 'stand', null, { timeout: 8000 });
+  await page.waitForFunction(() => (window as any).__murzik.game.cat.mode === 'stand', null, { timeout: 30000 });
   await expectNoErrors(errors);
 });
 

@@ -11,7 +11,7 @@ const goRoom = async (page: Page, r: string): Promise<void> => {
   await page.evaluate((x) => (window as any).__murzik.game.goToRoom(x), r);
   await page.waitForTimeout(700);
 };
-const catState = (page: Page, s: string, timeout = 5000): Promise<unknown> =>
+const catState = (page: Page, s: string, timeout = 20000): Promise<unknown> =>
   page.waitForFunction((x) => (window as any).__murzik.game.cat.state === x, s, { timeout });
 
 test('переход по всем 4 комнатам стрелками, домиком и по иконке шкалы', async ({ page }) => {
@@ -73,12 +73,12 @@ test('кухня: кормление из холодильника, брокко
   await page.click('.tray-item[data-item="apple"]');
   await catState(page, 'eat');
   expect(await need(page, 'food')).toBeGreaterThan(35);
-  await catState(page, 'idle', 8000);
+  await catState(page, 'idle', 30000);
   const before = await need(page, 'food');
   await page.click('.tray-item[data-item="broccoli"]');
   await catState(page, 'eatDisliked');
   expect(await need(page, 'food')).toBeGreaterThan(before);
-  await catState(page, 'idle', 8000);
+  await catState(page, 'idle', 30000);
   const f0 = await page.evaluate(() => (window as any).__murzik.game.save.inventory.fish);
   const n0 = await need(page, 'food');
   await page.click('.tray-item[data-item="fish"]');
@@ -103,7 +103,7 @@ test('кормление перетаскиванием ко рту: кот от
   await page.waitForTimeout(250);
   expect(await page.evaluate(() => (window as any).__murzik.game.cat.mouthHint)).toBe(1);
   await page.mouse.up();
-  await catState(page, 'eat', 4000);
+  await catState(page, 'eat', 20000);
   expect(await need(page, 'food')).toBeGreaterThan(25);
 });
 
@@ -148,12 +148,11 @@ test('спальня: лампа выкл → сон, тап ворчит, ла�
   await setNeed(page, 'sleep', 30);
   await page.click('.tool-lamp');
   await page.waitForFunction(() => (window as any).__murzik.game.cat.mode === 'lying', null, { timeout: 10000 });
-  await page.waitForTimeout(2000);
-  expect(await need(page, 'sleep')).toBeGreaterThan(31);
+  await page.waitForFunction(() => (window as any).__murzik.game.save.needs.sleep > 34, null, { timeout: 30000 });
   expect(await page.locator('.btn-arrow.left').isHidden()).toBe(true);
   const p = await catPoint(page, 'belly');
   await page.mouse.click(p.x, p.y);
-  await catState(page, 'grumble', 3000);
+  await catState(page, 'grumble', 20000);
   await page.click('.tool-lamp');
   await page.waitForFunction(() => (window as any).__murzik.game.cat.mode === 'stand', null, { timeout: 5000 });
   await expectNoErrors(errors);

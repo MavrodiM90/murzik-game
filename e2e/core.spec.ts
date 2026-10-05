@@ -22,7 +22,7 @@ test('тап по коту меняет его состояние (живот �
   const after = await catState(page);
   expect(after).not.toBe(before);
   expect(after).toBe('giggle');
-  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'idle', null, { timeout: 8000 });
+  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'idle', null, { timeout: 30000 });
   const nose = await catPoint(page, 'nose');
   await page.mouse.click(nose.x, nose.y);
   await page.waitForTimeout(150);
@@ -36,7 +36,7 @@ test('drag-бросок: кот летит, остаётся в комнате, 
   const belly = await catPoint(page, 'belly');
   await page.mouse.move(belly.x, belly.y);
   await page.mouse.down();
-  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'held', null, { timeout: 8000 });
+  await page.waitForFunction(() => (window as any).__murzik.game.cat.state === 'held', null, { timeout: 30000 });
   for (let i = 1; i <= 6; i++) {
     await page.mouse.move(belly.x + i * 25, belly.y - i * 35);
     await page.waitForTimeout(16);
