@@ -898,3 +898,22 @@ body {
 .mg-ok:active {
   transform: translateX(-50%) translateY(3px);
 }
+
+/* ---------- повторюшка (ушко) ---------- */
+.btn-ear.listening {
+  background: linear-gradient(#a8ffb8, #4cd470);
+  animation: pop 900ms ease-in-out infinite alternate;
+}
+.btn-ear.recording {
+  background: linear-gradient(#ffb0b0, #ff6b6b);
+}
+.btn-ear.speaking {
+  background: linear-gradient(#bfe6ff, #5aaeff);
+}
+.btn-ear.denied,
+.btn-ear.unsupported {
+  background: linear-gradient(#e0dbd4, #b8b1a8);
+}
+.btn-ear[hidden] {
+  display: none;
+}

@@ -46,6 +46,7 @@ export class Hud {
   readonly tray: FoodTray;
   readonly shop: ShopPanel;
   readonly minigames: MiniGames;
+  private ear!: HTMLButtonElement;
   private chestBtn: HTMLButtonElement | null = null;
   private chestAcc = 0;
   private extraTools: Partial<Record<RoomId, ToolSpec[]>> = {};
@@ -62,6 +63,15 @@ export class Hud {
     this.tray = new FoodTray(game, this);
     this.shop = new ShopPanel(game, this);
     this.minigames = new MiniGames(game, this);
+    this.ear = makeButton('ear', 'Повторюшка', 'btn-ear', () => {
+      if (!game.save.settings.voiceRepeat) return;
+      game.synth.unlock();
+      game.voice.toggle();
+    });
+    this.addSide(this.ear);
+    game.voice.onState = (st) => this.refreshEar(st);
+    game.on('settings', () => this.refreshEar(game.voice.state));
+    this.refreshEar(game.voice.state);
     this.addSide(makeButton('shop', 'Магазин', 'btn-shop', () => this.shop.toggle('shop')));
     this.addSide(makeButton('wardrobe', 'Гардероб', 'btn-wardrobe', () => this.shop.toggle('wardrobe')));
     game.onUpdate.push((dt) => {
@@ -292,6 +302,12 @@ export class Hud {
     } else this.chestBtn?.classList.add('shake');
     window.setTimeout(() => this.chestBtn?.classList.remove('shake'), 500);
     this.refreshChest();
+  }
+
+  private refreshEar(st: string): void {
+    const enabled = this.game.save.settings.voiceRepeat;
+    this.ear.hidden = !enabled;
+    for (const c of ['listening', 'recording', 'speaking', 'denied', 'unsupported']) this.ear.classList.toggle(c, st === c);
   }
 
   private refreshChest(): void {

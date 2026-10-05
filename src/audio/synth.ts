@@ -109,6 +109,11 @@ export class Synth {
     }
   }
 
+  /** Подключить внешний узел к общему выходу (с учётом громкости). */
+  connectOut(node: AudioNode): void {
+    if (this.master) node.connect(this.master);
+  }
+
   setVolume(v: number): void {
     this.volume = Math.max(0, Math.min(1, v));
     if (this.master) this.master.gain.value = this.volume;

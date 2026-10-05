@@ -1,5 +1,6 @@
 import { Vector3 } from 'three';
 import { Synth } from './audio/synth';
+import { VoiceRepeater } from './audio/voiceRepeat';
 import {
   FLOOR_COLORS,
   FOOD_GAIN,
@@ -29,7 +30,7 @@ import { createRooms, roomCenterX, ROOM_ORDER, type Room, type RoomId } from './
 import { Stage } from './render/stage';
 import { Thumbs } from './render/thumbs';
 
-export type GameEvent = 'coins' | 'needs' | 'room' | 'appearance' | 'sleep' | 'inventory';
+export type GameEvent = 'coins' | 'needs' | 'room' | 'appearance' | 'sleep' | 'inventory' | 'settings';
 
 export class Game implements InputHost {
   readonly stage: Stage;
@@ -40,6 +41,7 @@ export class Game implements InputHost {
   readonly rooms: Record<RoomId, Room>;
   readonly input: CatInput;
   readonly ball = new Ball();
+  readonly voice: VoiceRepeater;
   save: SaveData;
   roomId: RoomId = 'living';
   private camX = 0;
@@ -89,6 +91,7 @@ export class Game implements InputHost {
     this.applyAppearance();
     this.cat.onEvent = (e) => this.onCatEvent(e);
     this.cat.onActionEnd = (n) => this.onCatActionEnd(n);
+    this.voice = new VoiceRepeater(this);
     this.input = new CatInput(this);
     this.input.attach(canvas);
     this.synth.setVolume(this.save.settings.volume);
