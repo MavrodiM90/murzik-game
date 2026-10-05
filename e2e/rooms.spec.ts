@@ -40,8 +40,8 @@ test('свайп по пустому месту листает комнаты', 
   await openGame(page);
   await page.waitForTimeout(400);
   const vp = page.viewportSize()!;
-  const y = Math.round(vp.height * 0.3);
-  await page.mouse.move(vp.width * 0.8, y);
+  const y = Math.round(vp.height * 0.4);
+  await page.mouse.move(vp.width * 0.65, y);
   await page.mouse.down();
   await page.mouse.move(vp.width * 0.2, y, { steps: 8 });
   await page.mouse.up();

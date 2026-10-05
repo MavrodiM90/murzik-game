@@ -5,6 +5,7 @@ import { ROOM_ORDER, type RoomId } from '../render/rooms';
 import { BathTools } from './bathTools';
 import { FoodTray } from './foodTray';
 import { icon } from './icons';
+import { MiniGames } from './minigames';
 import { ShopPanel } from './shop';
 
 export interface Panel {
@@ -44,6 +45,7 @@ export class Hud {
   readonly bath: BathTools;
   readonly tray: FoodTray;
   readonly shop: ShopPanel;
+  readonly minigames: MiniGames;
   private chestBtn: HTMLButtonElement | null = null;
   private chestAcc = 0;
   private extraTools: Partial<Record<RoomId, ToolSpec[]>> = {};
@@ -59,6 +61,7 @@ export class Hud {
     this.bath = new BathTools(game, this);
     this.tray = new FoodTray(game, this);
     this.shop = new ShopPanel(game, this);
+    this.minigames = new MiniGames(game, this);
     this.addSide(makeButton('shop', 'Магазин', 'btn-shop', () => this.shop.toggle('shop')));
     this.addSide(makeButton('wardrobe', 'Гардероб', 'btn-wardrobe', () => this.shop.toggle('wardrobe')));
     game.onUpdate.push((dt) => {
@@ -180,7 +183,7 @@ export class Hud {
       active = false;
       const dx = e.clientX - sx;
       const dy = e.clientY - sy;
-      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5 && performance.now() - t0 < 700) {
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5 && performance.now() - t0 < 1200) {
         this.closePanel();
         this.game.stepRoom(dx < 0 ? 1 : -1);
       }

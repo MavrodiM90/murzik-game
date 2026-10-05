@@ -67,10 +67,10 @@ test('быстрый свайп по коту — шлепок, кот кувы�
   const errors = await openGame(page);
   await page.waitForTimeout(500);
   const belly = await catPoint(page, 'belly');
-  await page.mouse.move(belly.x - 60, belly.y);
+  await page.mouse.move(belly.x - 55, belly.y);
   await page.mouse.down();
-  await page.mouse.move(belly.x + 40, belly.y, { steps: 2 });
-  await page.mouse.move(belly.x + 140, belly.y, { steps: 2 });
+  await page.mouse.move(belly.x + 60, belly.y, { steps: 2 });
+  await page.mouse.move(belly.x + 180, belly.y, { steps: 2 });
   await page.mouse.up();
   await page.waitForTimeout(120);
   expect(await catState(page)).toBe('tumble');

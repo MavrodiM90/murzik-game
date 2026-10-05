@@ -647,6 +647,30 @@ const defs = {
       c.set('tailDrive', Math.sin(t * 9) * 0.4);
     },
   },
+  stumble: {
+    dur: 1.2,
+    prio: 5,
+    start(c) {
+      c.sfx('boing');
+      c.fx('stars', 'head', 4);
+    },
+    run(c, t, u) {
+      const e = env(u, 0.08, 0.7);
+      const k = t < 0.4 ? smoothstep(t / 0.4) : 1 - smoothstep((t - 0.4) / 0.6);
+      c.set('bodyX', 0.75 * k, 1);
+      c.set('headX', 0.35 * k);
+      c.set('armLz', -2.2 * e);
+      c.set('armRz', 2.2 * e);
+      c.set('legLx', Math.sin(t * 22) * 1.2 * e);
+      c.set('legRx', -Math.sin(t * 22) * 1.2 * e);
+      c.set('mouth', 0.6 * e);
+      c.set('lidL', 0);
+      c.set('lidR', 0);
+      c.set('pupilS', 1.25);
+      c.set('tailDrive', Math.sin(t * 20) * 0.7, e);
+      c.sq.target = 1 + 0.06 * Math.sin(t * 14) * e;
+    },
+  },
   kick: {
     dur: 0.5,
     prio: 2,

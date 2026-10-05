@@ -41,7 +41,7 @@ export class GestureTracker {
   private start: Sample = { x: 0, y: 0, t: 0 };
   private samples: Sample[] = [];
   private petLast: Sample | null = null;
-  private slapWindowMs = 300;
+  private slapWindowMs = 450;
 
   begin(x: number, y: number, t: number, part: Part | null): void {
     this.mode = part === null ? 'ignored' : 'pending';

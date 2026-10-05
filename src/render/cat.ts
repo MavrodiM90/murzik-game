@@ -210,6 +210,10 @@ export class Cat {
   private walkPhase = 0;
   walking = false;
   runMode = false;
+  /** режим мини-игры «Прыг-скок»: кот бежит в профиль на месте */
+  running = false;
+  /** вертикальный сдвиг для прыжков в мини-игре */
+  extraY = 0;
   /** 0..1 — внешний сигнал громкости для «повтора голоса» */
   mouthDrive = 0;
   /** 0..1 — рот приоткрывается, когда еду подносят близко */
@@ -783,6 +787,7 @@ export class Cat {
     this.layerIdle(dt);
     this.layerMood(dt);
     if (this.walking) this.layerWalk();
+    if (this.running) this.layerRun(dt);
     if (this.mode === 'held') this.layerHeld();
     else if (this.mode === 'flying') this.layerFlying();
 
@@ -797,7 +802,7 @@ export class Cat {
         this.endAction();
         ACTIONS[finished].after?.(this);
       }
-    } else if (this.mode === 'stand' && !this.walking && !this.lightsOff) {
+    } else if (this.mode === 'stand' && !this.walking && !this.lightsOff && !this.running) {
       this.idleIn -= dt;
       if (this.idleIn <= 0) {
         const name = pick(IDLE_ACTIONS);
@@ -942,6 +947,31 @@ export class Cat {
     p.smile = 1;
   }
 
+  private layerRun(dt: number): void {
+    const p = this.p;
+    this.walkPhase += dt * 17;
+    const s = Math.sin(this.walkPhase);
+    const grounded = this.extraY < 0.05;
+    p.yaw = 1.1;
+    p.legLx = grounded ? s * 1.15 : 0.9;
+    p.legRx = grounded ? -s * 1.15 : -0.7;
+    p.armLx = -s * 0.9 - 0.2;
+    p.armRx = s * 0.9 - 0.2;
+    p.armLz = -0.3;
+    p.armRz = 0.3;
+    p.hop = grounded ? Math.abs(s) * 0.14 : 0;
+    p.bodyX = 0.14;
+    p.tailDrive = Math.sin(this.walkPhase * 0.5) * 0.25;
+    p.tailCurl = -0.1;
+    p.earDroop = 0.25;
+    p.mouth = 0.3;
+    p.smile = 1;
+    p.look = 0;
+    p.pupilX = 0.09;
+    p.lidL = p.lidR = 0;
+    p.headX = 0.05;
+  }
+
   private layerHeld(): void {
     const p = this.p;
     const t = this.time;
@@ -1060,10 +1090,10 @@ export class Cat {
 
   private syncTransform(): void {
     const b = this.body;
-    this.root.position.set(b.x + this.offsetX, b.y, 0);
+    this.root.position.set(b.x + this.offsetX, b.y + this.extraY, 0);
     this.root.rotation.z = b.rot + (this.mode === 'held' ? this.swing.value : 0);
     // тень на полу
-    const h = Math.max(0, b.y - this.bounds.floorY);
+    const h = Math.max(0, b.y - this.bounds.floorY + this.extraY);
     const k = 1 / (1 + h * 0.25);
     this.shadow.position.x = b.x + this.offsetX;
     this.shadow.scale.set(1.5 * k + 0.2, 0.75 * k + 0.1, 1);

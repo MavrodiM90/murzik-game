@@ -102,7 +102,7 @@ export const GESTURE = {
   tapMaxMs: 280,
   tapMaxMove: 16,
   grabHoldMs: 450,
-  slapSpeed: 1.5, // px/мс за первые движения
+  slapSpeed: 1.2, // px/мс за первые движения
   slapMinDist: 40,
   petMinPath: 30,
   tickleTaps: 6,

@@ -91,6 +91,7 @@ body {
 }
 
 .hud-top {
+  z-index: 12;
   position: absolute;
   top: calc(var(--safe-top) + 8px);
   left: calc(var(--safe-left) + 10px);
@@ -647,4 +648,253 @@ body {
     transform: translate(-50%, -90px) scale(1);
     opacity: 0;
   }
+}
+
+/* ---------- мини-игры ---------- */
+#ui.mg-on .needs,
+#ui.mg-on .side,
+#ui.mg-on .tools,
+#ui.mg-on .btn-arrow,
+#ui.mg-on .coins,
+#ui.mg-on .btn-home {
+  display: none;
+}
+.mg {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  touch-action: none;
+}
+.mg-stage {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--safe-top) + 96px);
+  bottom: 0;
+  overflow: hidden;
+}
+.mg-bar {
+  position: absolute;
+  top: calc(var(--safe-top) + 30px);
+  left: 92px;
+  right: 18px;
+  height: 24px;
+  border-radius: 14px;
+  background: rgba(60, 40, 30, 0.45);
+  border: 3px solid #fff;
+  overflow: hidden;
+}
+.mg-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #ffd23f, #ff9f43);
+}
+.mg-x {
+  position: absolute;
+  top: calc(var(--safe-top) + 8px);
+  left: calc(var(--safe-left) + 10px);
+  background: linear-gradient(#ffe4a8, #ffb561);
+}
+.mg-basket {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 140px;
+  height: 110px;
+  will-change: transform;
+  filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.3));
+}
+.mg-basket svg,
+.mg-fish svg,
+.mg-balloon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+.mg-basket.catch svg {
+  animation: bump 300ms;
+}
+.mg-fish {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 90px;
+  height: 90px;
+  will-change: transform;
+  pointer-events: none;
+}
+.mg-balloon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100px;
+  height: 130px;
+  padding: 0;
+  border: 0;
+  background: none;
+  will-change: transform;
+}
+.mg-balloon::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+}
+.mem-grid {
+  position: absolute;
+  inset: 8px 12px 80px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 16px;
+  align-content: center;
+}
+.mem-card {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  perspective: 700px;
+  min-height: 120px;
+}
+.mem-card .face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  border-radius: 28px;
+  border: 5px solid #fff;
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.3);
+  backface-visibility: hidden;
+  transition: transform 380ms;
+}
+.mem-card .face svg {
+  width: 80%;
+  height: 80%;
+}
+.mem-card .back {
+  background: linear-gradient(#a99bff, #7a6cf0);
+}
+.mem-card .front {
+  background: #fff8ec;
+  transform: rotateY(180deg);
+}
+.mem-card.open .back {
+  transform: rotateY(180deg);
+}
+.mem-card.open .front {
+  transform: rotateY(0);
+}
+.mem-card.matched .front {
+  background: #eaffef;
+  border-color: #4cd470;
+  animation: bump 500ms;
+}
+.mg-menu {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(40, 24, 16, 0.5);
+}
+.mg-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  width: min(86%, 380px);
+}
+.mg-pick {
+  aspect-ratio: 1;
+  padding: 18px;
+  border-radius: 34px;
+  border: 5px solid #fff;
+  background: linear-gradient(#fff8ec, #ffe4b8);
+  box-shadow: 0 8px 0 rgba(120, 60, 10, 0.3);
+}
+.mg-pick:active {
+  transform: translateY(4px);
+}
+.mg-pick svg {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.mg-menu-x {
+  position: absolute;
+  bottom: calc(var(--safe-bottom) + 40px);
+  left: 50%;
+  margin-left: -36px;
+  background: #ff7a7a;
+}
+.mg-result {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.mg-result > * {
+  pointer-events: auto;
+}
+.mg-card {
+  padding: 22px 34px;
+  border-radius: 36px;
+  background: rgba(255, 248, 236, 0.96);
+  border: 6px solid #ffd23f;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  animation: popIn 500ms cubic-bezier(0.2, 1.6, 0.4, 1);
+  text-align: center;
+}
+@keyframes popIn {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+}
+.mg-stars {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.mg-stars span {
+  width: 64px;
+  height: 64px;
+  filter: grayscale(1) opacity(0.35);
+}
+.mg-stars span.on {
+  filter: none;
+  animation: bump 600ms;
+}
+.mg-stars svg {
+  width: 100%;
+  height: 100%;
+}
+.mg-reward {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  font: 900 64px/1 system-ui, sans-serif;
+  color: #3b2a20;
+}
+.mg-reward .ci {
+  width: 76px;
+  height: 76px;
+  display: block;
+}
+.mg-ok {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 90px);
+  transform: translateX(-50%);
+  width: 96px;
+  height: 96px;
+  background: linear-gradient(#a8ffb8, #4cd470);
+}
+.mg-ok:active {
+  transform: translateX(-50%) translateY(3px);
 }
